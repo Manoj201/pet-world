@@ -4,7 +4,11 @@ import { auth } from '@/services/firebase'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-const navItems = [{ label: 'Products', to: '/admin/products' }]
+const navItems = [
+  { label: 'Orders', to: '/admin/orders' },
+  { label: 'Products', to: '/admin/products' },
+  { label: 'Inventory', to: '/admin/inventory' },
+]
 
 export function AdminDashboard() {
   const navigate = useNavigate()

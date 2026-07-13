@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import {
@@ -17,6 +18,8 @@ import {
   type Product,
 } from '@/services/products'
 import { ProductFormDialog } from '@/pages/admin/ProductFormDialog'
+
+const LOW_STOCK_THRESHOLD = 5
 
 export function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([])
@@ -95,7 +98,18 @@ export function AdminProducts() {
               </TableCell>
               <TableCell>{product.category}</TableCell>
               <TableCell>${product.price.toFixed(2)}</TableCell>
-              <TableCell>{product.stock}</TableCell>
+              <TableCell>
+                <span
+                  className={
+                    product.stock <= LOW_STOCK_THRESHOLD
+                      ? 'flex items-center gap-1 font-medium text-destructive'
+                      : undefined
+                  }
+                >
+                  {product.stock <= LOW_STOCK_THRESHOLD && <TriangleAlert className="size-3.5" />}
+                  {product.stock}
+                </span>
+              </TableCell>
               <TableCell>
                 <Switch
                   checked={product.inStock}
