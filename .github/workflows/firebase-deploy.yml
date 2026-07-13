@@ -6,6 +6,7 @@ on:
     paths:
       - 'firestore.rules'
       - 'firestore.indexes.json'
+      - 'storage.rules'
       - 'firebase.json'
       - 'functions/**'
       - '.github/workflows/firebase-deploy.yml'
