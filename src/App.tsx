@@ -4,6 +4,7 @@ import { AdminRoute } from '@/components/AdminRoute'
 import { Catalog } from '@/pages/Catalog'
 import { ProductDetail } from '@/pages/ProductDetail'
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
+import { AdminLogin } from '@/pages/admin/AdminLogin'
 import { AdminProducts } from '@/pages/admin/AdminProducts'
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Catalog />} />
         <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/admin"
           element={
