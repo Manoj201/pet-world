@@ -4,8 +4,7 @@ service firebase.storage {
   match /b/{bucket}/o {
 
     function isAdmin() {
-      return request.auth != null &&
-             firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return request.auth != null && request.auth.token.admin == true;
     }
 
     match /products/{productId}/{allPaths=**} {
