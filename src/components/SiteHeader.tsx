@@ -7,6 +7,7 @@ import logo from '@/assets/logo.jpeg'
 export function SiteHeader() {
   const itemCount = useCartStore((state) => state.items.reduce((sum, i) => sum + i.qty, 0))
   const user = useAuthStore((state) => state.user)
+  const role = useAuthStore((state) => state.role)
 
   return (
     <div className="sticky top-0 z-10">
@@ -31,6 +32,11 @@ export function SiteHeader() {
             <Link to="/track-order" className="hidden hover:text-accent sm:inline">
               Track order
             </Link>
+            {role === 'admin' && (
+              <Link to="/admin" className="hover:text-accent">
+                Admin panel
+              </Link>
+            )}
             <Link to={user ? '/my-orders' : '/login'} className="hover:text-accent">
               {user ? 'My orders' : 'Sign in'}
             </Link>
