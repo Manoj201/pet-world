@@ -98,7 +98,7 @@ export function AdminInventory() {
   useEffect(() => subscribeToAllProducts(setProducts), [])
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <h1 className="mb-4 text-xl font-medium">Inventory</h1>
 
       <Table>

@@ -1,22 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { httpsCallable } from 'firebase/functions'
-import {
-  CheckCircle2,
-  CircleX,
-  Clock,
-  MessageCircle,
-  Package,
-  PackageCheck,
-  Search,
-  Truck,
-  type LucideIcon,
-} from 'lucide-react'
+import { MessageCircle, Package, Search } from 'lucide-react'
 import { functions } from '@/services/firebase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { OrderProgressStepper } from '@/components/OrderProgressStepper'
 import { formatPrice } from '@/lib/format'
-import { cn } from '@/lib/utils'
 import type { CartItem } from '@/store/useCartStore'
 
 interface OrderStatusResult {
@@ -33,64 +23,10 @@ const getOrderStatus = httpsCallable<{ orderNumber: string; phone: string }, Ord
   'getOrderStatus',
 )
 
-const STEPS: { key: string; label: string; icon: LucideIcon }[] = [
-  { key: 'pending', label: 'Order placed', icon: Clock },
-  { key: 'confirmed', label: 'Confirmed', icon: CheckCircle2 },
-  { key: 'shipped', label: 'Shipped', icon: Truck },
-  { key: 'delivered', label: 'Delivered', icon: PackageCheck },
-]
-
 const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER.replace(/\D/g, '')
 const helpWhatsAppUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
   'Hi! I need help finding my order number.',
 )}`
-
-function ProgressStepper({ status }: { status: string }) {
-  if (status === 'cancelled') {
-    return (
-      <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm font-medium text-destructive">
-        <CircleX className="size-5" />
-        This order was cancelled.
-      </div>
-    )
-  }
-
-  const currentIndex = STEPS.findIndex((step) => step.key === status)
-
-  return (
-    <div className="flex items-start">
-      {STEPS.map((step, i) => {
-        const isComplete = i <= currentIndex
-        const Icon = step.icon
-        return (
-          <div key={step.key} className="flex flex-1 flex-col items-center last:flex-none">
-            <div className="flex w-full items-center">
-              <div
-                className={cn(
-                  'flex size-8 shrink-0 items-center justify-center rounded-full',
-                  isComplete ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
-                )}
-              >
-                <Icon className="size-4" />
-              </div>
-              {i < STEPS.length - 1 && (
-                <div className={cn('h-0.5 flex-1', isComplete ? 'bg-primary' : 'bg-muted')} />
-              )}
-            </div>
-            <p
-              className={cn(
-                'mt-1.5 text-center text-xs',
-                isComplete ? 'font-medium text-foreground' : 'text-muted-foreground',
-              )}
-            >
-              {step.label}
-            </p>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
 
 export function OrderTrack() {
   const [orderNumber, setOrderNumber] = useState('')
@@ -182,7 +118,7 @@ export function OrderTrack() {
             <p className="font-medium">{result.orderNumber}</p>
           </div>
 
-          <ProgressStepper status={result.status} />
+          <OrderProgressStepper status={result.status} />
 
           <div className="space-y-1 border-t pt-4 text-sm">
             {result.items.map((item) => (

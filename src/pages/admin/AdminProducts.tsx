@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { TriangleAlert } from 'lucide-react'
+import { Search, TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import {
   Table,
@@ -18,16 +19,29 @@ import {
   type Product,
 } from '@/services/products'
 import { ProductFormDialog } from '@/pages/admin/ProductFormDialog'
+import { formatPrice } from '@/lib/format'
 
 const LOW_STOCK_THRESHOLD = 5
 
 export function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([])
+  const [search, setSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogKey, setDialogKey] = useState(0)
   const [editing, setEditing] = useState<Product | null>(null)
 
   useEffect(() => subscribeToAllProducts(setProducts), [])
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return products
+    return products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(q) ||
+        product.brand.toLowerCase().includes(q) ||
+        product.category.toLowerCase().includes(q),
+    )
+  }, [products, search])
 
   function openCreate() {
     setEditing(null)
@@ -60,10 +74,21 @@ export function AdminProducts() {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="p-4 sm:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-medium">Products</h1>
-        <Button onClick={openCreate}>Add product</Button>
+        <div className="flex flex-1 items-center justify-end gap-2">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search name, brand, category"
+              className="pl-9"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <Button onClick={openCreate}>Add product</Button>
+        </div>
       </div>
 
       <Table>
@@ -79,7 +104,7 @@ export function AdminProducts() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => (
+          {filtered.map((product) => (
             <TableRow key={product.id}>
               <TableCell>
                 <div className="size-10 overflow-hidden rounded bg-muted">
@@ -97,7 +122,7 @@ export function AdminProducts() {
                 <p className="text-xs text-muted-foreground">{product.brand}</p>
               </TableCell>
               <TableCell>{product.category}</TableCell>
-              <TableCell>${product.price.toFixed(2)}</TableCell>
+              <TableCell>{formatPrice(product.price)}</TableCell>
               <TableCell>
                 <span
                   className={
@@ -129,9 +154,11 @@ export function AdminProducts() {
         </TableBody>
       </Table>
 
-      {products.length === 0 && (
+      {filtered.length === 0 && (
         <p className="mt-8 text-center text-muted-foreground">
-          No products yet. Click "Add product" to create one.
+          {products.length === 0
+            ? 'No products yet. Click "Add product" to create one.'
+            : 'No products match your search.'}
         </p>
       )}
 

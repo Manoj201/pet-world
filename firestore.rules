@@ -14,11 +14,13 @@ service cloud.firestore {
     }
 
     match /orders/{id} {
-      allow create: if true;
+      // Orders are created exclusively via the createOrder callable (Admin
+      // SDK, bypasses these rules) so pricing is always server-computed.
+      allow create: if false;
       allow read: if request.auth != null &&
                      (resource.data.userId == request.auth.uid || isAdmin(request.auth.uid));
       allow update: if request.auth != null && isAdmin(request.auth.uid);
-      allow delete: if false;
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
     }
 
     match /users/{uid} {
@@ -35,6 +37,24 @@ service cloud.firestore {
 
     match /stockMovements/{id} {
       allow read, write: if request.auth != null && isAdmin(request.auth.uid);
+    }
+
+    match /reviews/{id} {
+      // Anyone (including guests) can submit a review, but it starts
+      // unapproved — only admins can flip it visible, so nothing reaches
+      // the public homepage without moderation.
+      allow create: if request.resource.data.name is string &&
+                       request.resource.data.name.size() > 0 &&
+                       request.resource.data.comment is string &&
+                       request.resource.data.comment.size() > 0 &&
+                       request.resource.data.rating is int &&
+                       request.resource.data.rating >= 1 &&
+                       request.resource.data.rating <= 5 &&
+                       request.resource.data.approved == false;
+      allow read: if resource.data.approved == true ||
+                     (request.auth != null && isAdmin(request.auth.uid));
+      allow update: if request.auth != null && isAdmin(request.auth.uid);
+      allow delete: if request.auth != null && isAdmin(request.auth.uid);
     }
   }
 }

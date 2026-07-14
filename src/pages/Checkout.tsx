@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCartStore, cartSubtotal } from '@/store/useCartStore'
 import { useAuthStore } from '@/store/useAuthStore'
-import { createOrder, type PaymentMethod } from '@/services/orders'
+import { createOrder, waitForOrderNumber, type PaymentMethod } from '@/services/orders'
 import { formatPrice } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { DELIVERY_FEE } from '@/pages/Cart'
@@ -33,24 +33,24 @@ export function Checkout() {
     setSubmitting(true)
     try {
       const buyer = { name, phone, address, email }
-      const orderId = await createOrder({
-        items,
-        subtotal,
-        deliveryFee: DELIVERY_FEE,
-        total,
+      const result = await createOrder({
+        items: items.map((item) => ({ productId: item.productId, qty: item.qty })),
         paymentMethod,
         buyer,
         userId: user?.uid ?? null,
       })
+      const orderNumber = await waitForOrderNumber(result.orderId)
       clearCart()
-      navigate(`/order-confirmation/${orderId}`, { state: { items, total, buyer } })
+      navigate(`/order-confirmation/${result.orderId}`, {
+        state: { items: result.items, total: result.total, buyer, orderNumber },
+      })
       window.location.assign(
         buildOrderWhatsAppUrl({
-          orderId,
-          items,
-          subtotal,
-          deliveryFee: DELIVERY_FEE,
-          total,
+          orderId: orderNumber || result.orderId,
+          items: result.items,
+          subtotal: result.subtotal,
+          deliveryFee: result.deliveryFee,
+          total: result.total,
           paymentMethod,
           buyer,
         }),

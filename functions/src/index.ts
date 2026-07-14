@@ -72,6 +72,89 @@ export const onOrderCreate = onDocumentCreated('orders/{orderId}', async (event)
   })
 })
 
+const DELIVERY_FEE = 350
+
+interface CreateOrderItemInput {
+  productId: string
+  qty: number
+}
+
+interface OrderBuyerInput {
+  name: string
+  phone: string
+  address: string
+  email: string
+}
+
+// Prices and totals are computed here from live product data, never trusted
+// from the client, then written via the Admin SDK (Firestore rules block
+// direct client writes to `orders` entirely). This still fires the
+// onOrderCreate trigger above unchanged, since Admin SDK writes trigger
+// Firestore functions the same as client writes.
+export const createOrder = onCall(async (request) => {
+  const { items, buyer, paymentMethod, userId } = request.data as {
+    items?: CreateOrderItemInput[]
+    buyer?: OrderBuyerInput
+    paymentMethod?: 'cod' | 'transfer'
+    userId?: string | null
+  }
+
+  if (!items?.length || !buyer?.name || !buyer?.phone || !buyer?.address) {
+    throw new HttpsError('invalid-argument', 'Missing required order fields')
+  }
+  if (paymentMethod !== 'cod' && paymentMethod !== 'transfer') {
+    throw new HttpsError('invalid-argument', 'Invalid payment method')
+  }
+  if (userId && request.auth?.uid !== userId) {
+    throw new HttpsError('permission-denied', 'userId must match the authenticated caller')
+  }
+  for (const item of items) {
+    if (!item.productId || !Number.isInteger(item.qty) || item.qty <= 0) {
+      throw new HttpsError('invalid-argument', 'Invalid item quantity')
+    }
+  }
+
+  const db = getFirestore()
+  const productRefs = items.map((item) => db.collection('products').doc(item.productId))
+  const productSnaps = await Promise.all(productRefs.map((ref) => ref.get()))
+
+  const lineItems = items.map((item, i) => {
+    const snap = productSnaps[i]
+    if (!snap.exists) {
+      throw new HttpsError('not-found', `Product ${item.productId} not found`)
+    }
+    const data = snap.data()!
+    return {
+      productId: item.productId,
+      name: data.name as string,
+      price: data.price as number,
+      imageUrl: (data.imageUrl as string) ?? '',
+      qty: item.qty,
+    }
+  })
+
+  const subtotal = lineItems.reduce((sum, item) => sum + item.price * item.qty, 0)
+  const total = subtotal + DELIVERY_FEE
+
+  const orderRef = await db.collection('orders').add({
+    orderNumber: '',
+    items: lineItems,
+    subtotal,
+    deliveryFee: DELIVERY_FEE,
+    total,
+    paymentMethod,
+    status: 'pending',
+    priority: 0,
+    flagged: false,
+    statusHistory: [],
+    buyer,
+    userId: userId ?? null,
+    createdAt: FieldValue.serverTimestamp(),
+  })
+
+  return { orderId: orderRef.id, subtotal, deliveryFee: DELIVERY_FEE, total, items: lineItems }
+})
+
 // Guest order tracking: looked up by orderNumber + phone rather than a
 // direct Firestore read, since guests have no auth to scope a read to.
 export const getOrderStatus = onCall(async (request) => {

@@ -1,17 +1,17 @@
 import {
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   orderBy,
   query,
-  serverTimestamp,
   updateDoc,
   where,
-  addDoc,
   arrayUnion,
   Timestamp,
 } from 'firebase/firestore'
-import { db } from '@/services/firebase'
+import { httpsCallable } from 'firebase/functions'
+import { db, functions } from '@/services/firebase'
 import type { CartItem } from '@/store/useCartStore'
 
 export type PaymentMethod = 'cod' | 'transfer'
@@ -45,16 +45,27 @@ export interface Order {
   buyer: OrderBuyer
   userId: string | null
   createdAt: Timestamp | null
+  deleted: boolean
+}
+
+export interface CreateOrderItemInput {
+  productId: string
+  qty: number
 }
 
 export interface CreateOrderInput {
-  items: CartItem[]
+  items: CreateOrderItemInput[]
+  buyer: OrderBuyer
+  paymentMethod: PaymentMethod
+  userId: string | null
+}
+
+export interface CreateOrderResult {
+  orderId: string
   subtotal: number
   deliveryFee: number
   total: number
-  paymentMethod: PaymentMethod
-  buyer: OrderBuyer
-  userId: string | null
+  items: CartItem[]
 }
 
 function toOrder(id: string, data: Record<string, unknown>): Order {
@@ -73,26 +84,44 @@ function toOrder(id: string, data: Record<string, unknown>): Order {
     buyer: data.buyer as OrderBuyer,
     userId: (data.userId as string | null) ?? null,
     createdAt: (data.createdAt as Timestamp) ?? null,
+    deleted: (data.deleted as boolean) ?? false,
   }
 }
 
-export async function createOrder(input: CreateOrderInput): Promise<string> {
-  const ref = await addDoc(collection(db, 'orders'), {
-    orderNumber: '',
-    items: input.items,
-    subtotal: input.subtotal,
-    deliveryFee: input.deliveryFee,
-    total: input.total,
-    paymentMethod: input.paymentMethod,
-    status: 'pending',
-    priority: 0,
-    flagged: false,
-    statusHistory: [],
-    buyer: input.buyer,
-    userId: input.userId,
-    createdAt: serverTimestamp(),
+// Pricing is computed server-side in the createOrder callable, never
+// trusted from the client — see functions/src/index.ts. Firestore rules
+// block direct client writes to `orders` entirely.
+const createOrderCallable = httpsCallable<CreateOrderInput, CreateOrderResult>(
+  functions,
+  'createOrder',
+)
+
+export async function createOrder(input: CreateOrderInput): Promise<CreateOrderResult> {
+  const response = await createOrderCallable(input)
+  return response.data
+}
+
+// orderNumber is assigned by the onOrderCreate Cloud Function trigger, not at
+// creation time, so callers that need the human-readable number right after
+// createOrder (e.g. the WhatsApp notification) must wait for it to land.
+export function waitForOrderNumber(orderId: string, timeoutMs = 8000): Promise<string> {
+  return new Promise((resolve) => {
+    let unsubscribe: () => void = () => {}
+
+    const timeout = setTimeout(() => {
+      unsubscribe()
+      resolve('')
+    }, timeoutMs)
+
+    unsubscribe = onSnapshot(doc(db, 'orders', orderId), (snap) => {
+      const orderNumber = snap.data()?.orderNumber as string | undefined
+      if (orderNumber) {
+        clearTimeout(timeout)
+        unsubscribe()
+        resolve(orderNumber)
+      }
+    })
   })
-  return ref.id
 }
 
 export function subscribeToUserOrders(userId: string, onChange: (orders: Order[]) => void) {
@@ -126,4 +155,20 @@ export async function updateOrderStatus(
 
 export async function updateOrderPriority(orderId: string, priority: number): Promise<void> {
   await updateDoc(doc(db, 'orders', orderId), { priority })
+}
+
+// Soft delete: moves the order to the admin Trash view without losing the
+// record or its audit trail. Reversible via restoreOrder.
+export async function softDeleteOrder(orderId: string): Promise<void> {
+  await updateDoc(doc(db, 'orders', orderId), { deleted: true })
+}
+
+export async function restoreOrder(orderId: string): Promise<void> {
+  await updateDoc(doc(db, 'orders', orderId), { deleted: false })
+}
+
+// Permanent, irreversible removal — only ever called from the Trash view,
+// after an order has already been soft-deleted.
+export async function deleteOrder(orderId: string): Promise<void> {
+  await deleteDoc(doc(db, 'orders', orderId))
 }

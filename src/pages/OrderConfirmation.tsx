@@ -9,6 +9,7 @@ interface ConfirmationState {
   items: CartItem[]
   total: number
   buyer: OrderBuyer
+  orderNumber: string
 }
 
 export function OrderConfirmation() {
@@ -22,7 +23,7 @@ export function OrderConfirmation() {
       <p className="mt-2 text-muted-foreground">
         Your order has been received. We'll be in touch shortly to confirm.
       </p>
-      <p className="mt-1 text-sm text-muted-foreground">Reference: {id}</p>
+      <p className="mt-1 text-sm text-muted-foreground">Reference: {state?.orderNumber || id}</p>
 
       {state && (
         <div className="mt-6 space-y-1 rounded-lg border p-4 text-left text-sm">

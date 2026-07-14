@@ -11,12 +11,14 @@ import { OrderConfirmation } from '@/pages/OrderConfirmation'
 import { OrderTrack } from '@/pages/OrderTrack'
 import { MyOrders } from '@/pages/MyOrders'
 import { Login } from '@/pages/Login'
+import { Reviews } from '@/pages/Reviews'
 import { NotFound } from '@/pages/NotFound'
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
 import { AdminLogin } from '@/pages/admin/AdminLogin'
 import { AdminInventory } from '@/pages/admin/AdminInventory'
 import { AdminOrders } from '@/pages/admin/AdminOrders'
 import { AdminProducts } from '@/pages/admin/AdminProducts'
+import { AdminReviews } from '@/pages/admin/AdminReviews'
 
 function App() {
   return (
@@ -33,6 +35,7 @@ function App() {
           <Route path="/track-order" element={<OrderTrack />} />
           <Route path="/my-orders" element={<MyOrders />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/reviews" element={<Reviews />} />
           <Route path="*" element={<NotFound />} />
         </Route>
 
@@ -49,6 +52,7 @@ function App() {
           <Route path="orders" element={<AdminOrders />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="inventory" element={<AdminInventory />} />
+          <Route path="reviews" element={<AdminReviews />} />
         </Route>
       </Routes>
     </BrowserRouter>

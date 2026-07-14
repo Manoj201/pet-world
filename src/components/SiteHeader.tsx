@@ -1,6 +1,7 @@
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
-import { Menu, MessageCircle, ShoppingCart } from 'lucide-react'
+import { Banknote, MessageCircle, Menu, ShieldCheck, ShoppingCart, Truck } from 'lucide-react'
 import { auth } from '@/services/firebase'
 import { useCartStore } from '@/store/useCartStore'
 import { useAuthStore } from '@/store/useAuthStore'
@@ -15,23 +16,43 @@ import {
 } from '@/components/ui/sheet'
 import logo from '@/assets/logo.jpeg'
 
+const ANNOUNCEMENTS = [
+  { icon: MessageCircle, label: 'Confirm your order instantly via WhatsApp' },
+  { icon: Banknote, label: 'Cash on delivery available' },
+  { icon: Truck, label: 'Fast local delivery' },
+  { icon: ShieldCheck, label: 'Quality-checked products' },
+]
+
 export function SiteHeader() {
   const navigate = useNavigate()
   const itemCount = useCartStore((state) => state.items.reduce((sum, i) => sum + i.qty, 0))
   const user = useAuthStore((state) => state.user)
   const role = useAuthStore((state) => state.role)
+  const [announcementIndex, setAnnouncementIndex] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAnnouncementIndex((i) => (i + 1) % ANNOUNCEMENTS.length)
+    }, 3500)
+    return () => clearInterval(interval)
+  }, [])
 
   async function handleSignOut() {
     await signOut(auth)
     navigate('/')
   }
 
+  const Announcement = ANNOUNCEMENTS[announcementIndex].icon
+
   return (
     <div className="sticky top-0 z-10">
       <div className="hidden bg-accent px-4 py-1.5 text-center text-xs font-medium text-accent-foreground sm:block">
-        <span className="inline-flex items-center gap-1.5">
-          <MessageCircle className="size-3.5" />
-          Confirm your order instantly via WhatsApp · Cash on delivery available
+        <span
+          key={announcementIndex}
+          className="inline-flex animate-in fade-in items-center gap-1.5 duration-500"
+        >
+          <Announcement className="size-3.5" />
+          {ANNOUNCEMENTS[announcementIndex].label}
         </span>
       </div>
 

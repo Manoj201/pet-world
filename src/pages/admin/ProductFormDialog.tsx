@@ -87,7 +87,7 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label htmlFor="name">Name</Label>
               <Input
@@ -108,9 +108,9 @@ export function ProductFormDialog({ open, onOpenChange, product }: ProductFormDi
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="grid gap-1.5">
-              <Label htmlFor="price">Price</Label>
+              <Label htmlFor="price">Price (LKR)</Label>
               <Input
                 id="price"
                 type="number"

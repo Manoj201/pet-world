@@ -6,7 +6,7 @@ import { useCartStore, cartSubtotal } from '@/store/useCartStore'
 import { formatPrice } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-export const DELIVERY_FEE = 5
+export const DELIVERY_FEE = 350
 
 export function Cart() {
   const items = useCartStore((state) => state.items)
