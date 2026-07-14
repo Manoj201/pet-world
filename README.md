@@ -1,77 +1,50 @@
-# React + TypeScript + Vite
+# Pet World
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Your Pet's Life Partner — a pet supply storefront with guest/account checkout, WhatsApp order
+notifications, order tracking, and an admin panel for products, orders, and inventory.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend:** React + TypeScript + Vite, Tailwind v4, shadcn/ui (Base UI), Zustand, React Router
+- **Backend:** Firebase (Auth, Firestore, Storage, Cloud Functions)
+- **Hosting:** Vercel (frontend), Firebase (rules/functions via GitHub Actions)
 
-## React Compiler
+## Local development
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+yarn install
+cp .env.example .env.local   # fill in Firebase config, WhatsApp number, Maps embed key
+yarn dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `yarn dev` — start the Vite dev server
+- `yarn build` — typecheck + production build
+- `yarn lint` — ESLint
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Project structure
 
 ```
+src/
+  pages/            # routed pages, admin/ subfolder for the admin panel
+  components/       # shared components; components/ui/ is shadcn-generated
+  services/         # Firebase-backed data access (products, orders, storage, inventory)
+  store/            # Zustand stores (cart, auth)
+  utils/            # small helpers (WhatsApp link builder)
+functions/          # Cloud Functions (stock transactions, order tracking, admin claims)
+firestore.rules, storage.rules, firestore.indexes.json
+```
+
+## Deployment
+
+- **Frontend:** push to `main` → Vercel auto-deploys (configured via Vercel's GitHub integration)
+- **Backend:** push to `main` → `.github/workflows/firebase-deploy.yml` deploys Firestore
+  rules/indexes and Cloud Functions, using a GCP service account stored in the
+  `FIREBASE_SERVICE_ACCOUNT` and `FIREBASE_PROJECT_ID` GitHub secrets
+
+## Environment variables
+
+See `.env.example`. All are `VITE_`-prefixed and safe to expose client-side (Firebase web config
+is meant to be public; the Google Maps key is restricted to the Maps Embed API and specific
+domains in Google Cloud Console).

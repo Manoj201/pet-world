@@ -82,7 +82,15 @@ export function Checkout() {
 
         <div className="grid gap-1.5">
           <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" required value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <Input
+            id="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            required
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
         </div>
 
         <div className="grid gap-1.5">

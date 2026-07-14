@@ -11,6 +11,7 @@ import { OrderConfirmation } from '@/pages/OrderConfirmation'
 import { OrderTrack } from '@/pages/OrderTrack'
 import { MyOrders } from '@/pages/MyOrders'
 import { Login } from '@/pages/Login'
+import { NotFound } from '@/pages/NotFound'
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
 import { AdminLogin } from '@/pages/admin/AdminLogin'
 import { AdminInventory } from '@/pages/admin/AdminInventory'
@@ -32,6 +33,7 @@ function App() {
           <Route path="/track-order" element={<OrderTrack />} />
           <Route path="/my-orders" element={<MyOrders />} />
           <Route path="/login" element={<Login />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
 
         <Route path="/admin/login" element={<AdminLogin />} />

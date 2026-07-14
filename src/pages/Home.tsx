@@ -6,6 +6,7 @@ import {
   Cat,
   Dog,
   Fish,
+  MapPin,
   MessageCircle,
   PawPrint,
   ShieldCheck,
@@ -26,6 +27,14 @@ const TRUST_POINTS = [
 ]
 
 const INLINE_TRUST = ['Fast delivery', 'Cash on delivery', 'WhatsApp confirmation']
+
+const STORE_LAT = 6.203655
+const STORE_LNG = 80.4754034
+const STORE_MAPS_URL = 'https://maps.app.goo.gl/rVH9pwsb8m714XkA6'
+const mapsEmbedKey = import.meta.env.VITE_GOOGLE_MAPS_EMBED_KEY
+const STORE_EMBED_URL = mapsEmbedKey
+  ? `https://www.google.com/maps/embed/v1/place?key=${mapsEmbedKey}&q=${STORE_LAT},${STORE_LNG}&zoom=17`
+  : null
 
 const TILE_STYLES = [
   'bg-primary text-primary-foreground',
@@ -147,6 +156,40 @@ export function Home() {
               <p className="text-sm text-muted-foreground">{label}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="border-t">
+        <div className="mx-auto max-w-6xl px-6 py-12">
+          <h2 className="text-xl font-semibold">Visit our store</h2>
+          <p className="mt-1 mb-4 text-sm text-muted-foreground">Pet World, Pitabeddara, Sri Lanka</p>
+
+          <div className="overflow-hidden rounded-2xl border shadow-sm">
+            {STORE_EMBED_URL ? (
+              <iframe
+                title="Pet World store location"
+                src={STORE_EMBED_URL}
+                className="h-80 w-full"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            ) : (
+              <div className="flex h-80 w-full flex-col items-center justify-center gap-2 bg-muted text-muted-foreground">
+                <MapPin className="size-8" />
+                <p className="text-sm">Map preview coming soon</p>
+              </div>
+            )}
+          </div>
+
+          <a
+            href={STORE_MAPS_URL}
+            target="_blank"
+            rel="noreferrer"
+            className={cn(buttonVariants({ variant: 'outline' }), 'mt-4 gap-2')}
+          >
+            <MapPin className="size-4" />
+            Get directions
+          </a>
         </div>
       </section>
     </div>
