@@ -1,6 +1,7 @@
 import { useRef, type MouseEvent, type TouchEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
+import { toast } from 'sonner'
 import { useCartStore } from '@/store/useCartStore'
 import type { Product } from '@/services/products'
 import { formatPrice } from '@/lib/format'
@@ -10,6 +11,7 @@ const TAP_MOVE_THRESHOLD = 10
 
 export function ProductCard({ product }: { product: Product }) {
   const addItem = useCartStore((state) => state.addItem)
+  const navigate = useNavigate()
   const touchStart = useRef<{ x: number; y: number } | null>(null)
   const outOfStock = product.stock <= 0
 
@@ -20,6 +22,11 @@ export function ProductCard({ product }: { product: Product }) {
       name: product.name,
       price: product.price,
       imageUrl: product.imageUrl,
+    })
+    // A fixed-position toast is the fix here — the header cart badge alone
+    // is easy to miss if the shopper has scrolled down the product grid.
+    toast.success(`Added ${product.name} to cart`, {
+      action: { label: 'View cart', onClick: () => navigate('/cart') },
     })
   }
 

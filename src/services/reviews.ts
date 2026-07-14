@@ -74,3 +74,9 @@ export async function setReviewApproved(reviewId: string, approved: boolean): Pr
 export async function deleteReview(reviewId: string): Promise<void> {
   await deleteDoc(doc(db, 'reviews', reviewId))
 }
+
+export function averageRating(reviews: Review[]): { average: number; count: number } {
+  if (reviews.length === 0) return { average: 0, count: 0 }
+  const sum = reviews.reduce((total, review) => total + review.rating, 0)
+  return { average: sum / reviews.length, count: reviews.length }
+}

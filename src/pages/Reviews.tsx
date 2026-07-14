@@ -1,13 +1,14 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { MessageSquareHeart } from 'lucide-react'
-import { createReview } from '@/services/reviews'
+import { averageRating, createReview, subscribeToApprovedReviews, type Review } from '@/services/reviews'
 import { StarRating } from '@/components/StarRating'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
 export function Reviews() {
@@ -16,6 +17,9 @@ export function Reviews() {
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [reviews, setReviews] = useState<Review[] | null>(null)
+
+  useEffect(() => subscribeToApprovedReviews(setReviews), [])
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -92,6 +96,43 @@ export function Reviews() {
           {submitting ? 'Submitting…' : 'Submit review'}
         </Button>
       </form>
+
+      <div className="mt-12">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Recent reviews</h2>
+          {reviews && reviews.length > 0 && (
+            <div className="flex items-center gap-1.5 text-sm">
+              <span className="font-semibold text-primary">
+                {averageRating(reviews).average.toFixed(1)}
+              </span>
+              <StarRating value={Math.round(averageRating(reviews).average)} size="sm" />
+              <span className="text-muted-foreground">({reviews.length})</span>
+            </div>
+          )}
+        </div>
+
+        {reviews === null ? (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 rounded-2xl" />
+            ))}
+          </div>
+        ) : reviews.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground">
+            No reviews yet — be the first to share your experience.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {reviews.map((review) => (
+              <div key={review.id} className="rounded-2xl border bg-card p-4 shadow-sm">
+                <StarRating value={review.rating} size="sm" />
+                <p className="mt-2 text-sm text-muted-foreground">"{review.comment}"</p>
+                <p className="mt-2 text-sm font-medium">{review.name}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

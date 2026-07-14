@@ -16,10 +16,11 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { subscribeToCatalog, type Product } from '@/services/products'
-import { subscribeToApprovedReviews, type Review } from '@/services/reviews'
+import { averageRating, subscribeToApprovedReviews, type Review } from '@/services/reviews'
 import { ProductCard } from '@/components/ProductCard'
 import { StarRating } from '@/components/StarRating'
 import { buttonVariants } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import logo from '@/assets/logo.jpeg'
 
@@ -66,7 +67,7 @@ function iconForCategory(category: string): LucideIcon {
 
 export function Home() {
   const [products, setProducts] = useState<Product[] | null>(null)
-  const [reviews, setReviews] = useState<Review[]>([])
+  const [reviews, setReviews] = useState<Review[] | null>(null)
 
   useEffect(() => subscribeToCatalog(setProducts), [])
   useEffect(() => subscribeToApprovedReviews(setReviews), [])
@@ -121,44 +122,66 @@ export function Home() {
         />
       </section>
 
-      {categories.length > 0 && (
+      {products === null ? (
         <section className="mx-auto max-w-6xl px-6 py-12">
-          <h2 className="mb-4 text-xl font-semibold">Shop by category</h2>
+          <Skeleton className="mb-4 h-6 w-40" />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-            {categories.map((category, i) => {
-              const Icon = iconForCategory(category)
-              return (
-                <Link
-                  key={category}
-                  to={`/shop?category=${encodeURIComponent(category)}`}
-                  className={cn(
-                    'flex items-center gap-3 rounded-xl px-4 py-4 text-sm font-medium shadow-sm transition-transform hover:-translate-y-0.5 hover:shadow-md',
-                    TILE_STYLES[i % TILE_STYLES.length],
-                  )}
-                >
-                  <Icon className="size-5" />
-                  {category}
-                </Link>
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      {featured.length > 0 && (
-        <section className="mx-auto max-w-6xl px-6 py-12">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Featured products</h2>
-            <Link to="/shop" className="text-sm font-medium text-primary hover:underline">
-              View all →
-            </Link>
-          </div>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3">
-            {featured.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 rounded-xl" />
             ))}
           </div>
         </section>
+      ) : (
+        categories.length > 0 && (
+          <section className="mx-auto max-w-6xl px-6 py-12">
+            <h2 className="mb-4 text-xl font-semibold">Shop by category</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+              {categories.map((category, i) => {
+                const Icon = iconForCategory(category)
+                return (
+                  <Link
+                    key={category}
+                    to={`/shop?category=${encodeURIComponent(category)}`}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl px-4 py-4 text-sm font-medium shadow-sm transition-transform hover:-translate-y-0.5 hover:shadow-md',
+                      TILE_STYLES[i % TILE_STYLES.length],
+                    )}
+                  >
+                    <Icon className="size-5" />
+                    {category}
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
+        )
+      )}
+
+      {products === null ? (
+        <section className="mx-auto max-w-6xl px-6 py-12">
+          <Skeleton className="mb-4 h-6 w-48" />
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-square w-full rounded-xl" />
+            ))}
+          </div>
+        </section>
+      ) : (
+        featured.length > 0 && (
+          <section className="mx-auto max-w-6xl px-6 py-12">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Featured products</h2>
+              <Link to="/shop" className="text-sm font-medium text-primary hover:underline">
+                View all →
+              </Link>
+            </div>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3">
+              {featured.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </section>
+        )
       )}
 
       <section className="overflow-hidden border-y bg-primary py-5">
@@ -176,20 +199,60 @@ export function Home() {
 
       <section className="border-t">
         <div className="mx-auto max-w-6xl px-6 py-12">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xl font-semibold">What our customers say</h2>
             <Link to="/reviews" className="text-sm font-medium text-primary hover:underline">
               Leave a review →
             </Link>
           </div>
 
-          {reviews.length === 0 ? (
+          {reviews && reviews.length > 0 && (
+            <div className="mb-6 flex items-center gap-3">
+              <p className="text-3xl font-bold text-primary">
+                {averageRating(reviews).average.toFixed(1)}
+              </p>
+              <div>
+                <StarRating value={Math.round(averageRating(reviews).average)} size="sm" />
+                <p className="text-xs text-muted-foreground">
+                  Based on {reviews.length} review{reviews.length === 1 ? '' : 's'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {reviews === null ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-32 rounded-2xl" />
+              ))}
+            </div>
+          ) : reviews.length === 0 ? (
             <div className="rounded-2xl border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
               No reviews yet — be the first to share your experience.
             </div>
+          ) : reviews.length > 3 ? (
+            <div className="overflow-hidden">
+              <div
+                className="flex w-max animate-marquee gap-4"
+                style={{ animationDuration: '40s' }}
+              >
+                {[...reviews, ...reviews].map((review, i) => (
+                  <div
+                    key={`${review.id}-${i}`}
+                    className="w-72 shrink-0 rounded-2xl border bg-card p-5 shadow-sm"
+                  >
+                    <StarRating value={review.rating} size="sm" />
+                    <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
+                      "{review.comment}"
+                    </p>
+                    <p className="mt-3 text-sm font-medium">{review.name}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {reviews.slice(0, 6).map((review) => (
+              {reviews.map((review) => (
                 <div key={review.id} className="rounded-2xl border bg-card p-5 shadow-sm">
                   <StarRating value={review.rating} size="sm" />
                   <p className="mt-3 text-sm text-muted-foreground">"{review.comment}"</p>
